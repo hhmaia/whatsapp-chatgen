@@ -1,0 +1,4 @@
+whatsapp-chatgen
+
+This is a toy project for experimenting with text generation using recurrent
+neural networks and Whatsapp exported history. 
