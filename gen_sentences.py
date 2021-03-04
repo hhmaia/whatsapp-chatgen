@@ -11,7 +11,7 @@ from parsechat import parse_tape, create_indexes_tape
 
 
 def generate_sentences(model_path, seed_path, num_words):
-    model = getmodel(31, 10000, 32, model_path)
+    model = tf.keras.models.load_model(model_path) 
     tokenizer_path = model_path + '.tokenizer.json' 
 
     with open(tokenizer_path, 'r') as f:

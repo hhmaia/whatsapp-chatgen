@@ -5,21 +5,20 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.preprocessing.text import tokenizer_from_json
 
-from model import getmodel
 from parsechat import create_indexes_tape, create_datasets
 from utils import create_lr_sched, export_vocabulary, export_embeddings
 
 
 def check_dirs(run_hash):
-    logs_path = os.path.join('logs/', run_hash)
-    ckp_path = os.path.join('ckp/', run_hash)
-    tok_path = os.path.join('ckp/', run_hash+'.tokenizer.json')
+    logs_path = os.path.join('out/logs/', run_hash)
+    model_path = os.path.join('out/model/', run_hash)
+    tok_path = os.path.join('out/', run_hash+'.tokenizer.json')
     try:
         os.listdir(logs_path)
     except FileNotFoundError:
         os.makedirs(logs_path)
 
-    return logs_path, ckp_path, tok_path
+    return logs_path, model_path, tok_path
 
 
 def train(dataset_path,
@@ -32,13 +31,13 @@ def train(dataset_path,
         train_split = 0.8,
         val_split = 0.2):
     
-    logs_path, ckp_path, tok_path = check_dirs(run_hash)
+    logs_path, model_path, tok_path = check_dirs(run_hash)
+    emb_metadata_path = logs_path + '/meta.tsv'
 
     ckp_cb = tf.keras.callbacks.ModelCheckpoint(
-        ckp_path,
-        'val_accuracy', 
-        save_best_only=False,
-        save_weights_only=True)
+        model_path,
+        'val_accuracy',
+        save_best_only=True)
 
     lr_cb = tf.keras.callbacks.LearningRateScheduler(
         create_lr_sched(epochs/2, epochs), True)
@@ -46,7 +45,7 @@ def train(dataset_path,
     tb_cb = tf.keras.callbacks.TensorBoard(
             logs_path, 10, True, True, 
             embeddings_freq=10,  
-            embeddings_metadata=logs_path+'/meta.tsv')
+            embeddings_metadata=emb_metadata_path)
 
     with open(tok_path, 'r') as f:
         tokenizer = tokenizer_from_json(f.read())
@@ -60,10 +59,11 @@ def train(dataset_path,
         train_nbatches, 
         val_nbatches,
         batch_size, 
-        seq_len, 
-        vocab_size)
+        seq_len) 
 
-    model = getmodel(seq_len-1, vocab_size, emb_dim, ckp_path)
+    model = tf.keras.models.load_model(model_path)
+    model.compile('adam', 'sparse_categorical_crossentropy', ['accuracy'])
+    model.summary()
 
     embeddings = model.layers[0].weights[0].numpy() 
     export_vocabulary(vocab_size, tokenizer.word_index, logs_path)

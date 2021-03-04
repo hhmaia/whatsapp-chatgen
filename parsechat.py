@@ -129,8 +129,7 @@ def create_datasets(tape,
                     train_n_batches,
                     val_n_batches,
                     batch_size,
-                    seq_len,
-                    vocab_size):
+                    seq_len):
 
     dataset = tf.data.Dataset.from_tensor_slices(tape)
     dataset = dataset.window(seq_len, 1, drop_remainder=True)
@@ -147,7 +146,8 @@ def create_datasets(tape,
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Creates tokenizer and saves it as a json file.')
+    parser = argparse.ArgumentParser(
+            description='Create tokenizer and save it as json.')
     parser.add_argument('path', type=str)
     parser.add_argument('dataset', type=str)
     parser.add_argument('vocab_size', type=int)
