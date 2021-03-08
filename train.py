@@ -40,7 +40,7 @@ def train(dataset_path,
         save_best_only=True)
 
     lr_cb = tf.keras.callbacks.LearningRateScheduler(
-        create_lr_sched(epochs/2, epochs), True)
+        create_lr_sched(epochs/2, epochs, 1e-4), True)
 
     tb_cb = tf.keras.callbacks.TensorBoard(
             logs_path, 10, True, True, 
@@ -83,7 +83,8 @@ if __name__ == '__main__':
     parser.add_argument('dataset', type=str)
     parser.add_argument('run_hash', type=str)
     parser.add_argument('epochs', type=int)
+    parser.add_argument('vocab_size', type=int)
     args = parser.parse_args()
 
-    train(args.dataset, args.run_hash, epochs=args.epochs)
+    train(args.dataset, args.run_hash, epochs=args.epochs, vocab_size=args.vocab_size)
 
