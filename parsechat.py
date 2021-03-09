@@ -83,10 +83,20 @@ def export_tokenizer(filepath, dataset_path, max_vocab_size):
     with open(filepath, 'w') as f:
         f.write(tokenizer.to_json())
 
+    return tokenizer
+
+
+def export_vocabulary(path, vocab_size, word_index):
+    with open('path', 'w') as f:
+        f.writelines(['0\n'])
+        words = list(word_index.keys())
+        f.write('\n'.join(words[:vocab_size]))
+
 
 def create_indexes_tape(dataset_path, tokenizer):
     msgs_tape = parse_tape(dataset_path)
     return tokenizer.texts_to_sequences([msgs_tape])[0]
+
 
 def create_datasets(tape,
                     train_n_batches,
@@ -98,7 +108,7 @@ def create_datasets(tape,
     dataset = dataset.window(seq_len, 1, drop_remainder=True)
     dataset = dataset.flat_map(lambda x: x.batch(seq_len))
     dataset = dataset.map(lambda x: (x[:-1], x[-1]))
-    dataset = dataset.shuffle((len(tape)-seq_len), seed=1)
+    dataset = dataset.shuffle((len(tape)-seq_len)//2, seed=1)
     dataset = dataset.batch(batch_size)
     train_dataset = dataset.take(train_n_batches)
     dataset = dataset.skip(train_n_batches)
@@ -111,10 +121,19 @@ def create_datasets(tape,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
             description='Create tokenizer and save it as json.')
-    parser.add_argument('path', type=str)
+    parser.add_argument('tok_path', type=str)
+    parser.add_argument('labels_path', type=str) 
     parser.add_argument('dataset', type=str)
     parser.add_argument('vocab_size', type=int)
     args = parser.parse_args()
     
-    export_tokenizer(args.path, args.dataset, args.vocab_size)
+    tokenizer = export_tokenizer(
+            args.tok_path,
+            args.dataset,
+            args.vocab_size)
+
+    export_vocabulary(
+            args.labels_path,
+            args.vocab_size,
+            tokenizer.word_index) 
 

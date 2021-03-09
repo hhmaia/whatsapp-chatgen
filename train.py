@@ -6,13 +6,15 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing.text import tokenizer_from_json
 
 from parsechat import create_indexes_tape, create_datasets
-from utils import create_lr_sched, export_vocabulary, export_embeddings
+from utils import create_lr_sched, export_embeddings
 
 
 def check_dirs(run_hash):
-    logs_path = os.path.join('out/logs/', run_hash)
-    model_path = os.path.join('out/model/', run_hash)
-    tok_path = os.path.join('out/', run_hash+'.tokenizer.json')
+    model_path = os.path.join('out', run_hash, 'model')
+    assets_path = os.path.join(model_path, 'assets') 
+    logs_path = os.path.join(assets_path, 'logs')
+    tok_path = os.path.join(assets_path, 'tokenizer.json')
+
     try:
         os.listdir(logs_path)
     except FileNotFoundError:
@@ -32,7 +34,7 @@ def train(dataset_path,
         val_split = 0.2):
     
     logs_path, model_path, tok_path = check_dirs(run_hash)
-    emb_metadata_path = logs_path + '/meta.tsv'
+    labels_path = os.path.join(model_path, 'labels.tsv')
 
     ckp_cb = tf.keras.callbacks.ModelCheckpoint(
         model_path,
@@ -40,12 +42,12 @@ def train(dataset_path,
         save_best_only=True)
 
     lr_cb = tf.keras.callbacks.LearningRateScheduler(
-        create_lr_sched(epochs/2, epochs, 1e-4), True)
+        create_lr_sched(epochs/2, epochs), True)
 
     tb_cb = tf.keras.callbacks.TensorBoard(
             logs_path, 10, True, True, 
             embeddings_freq=10,  
-            embeddings_metadata=emb_metadata_path)
+            embeddings_metadata=labels_path)
 
     with open(tok_path, 'r') as f:
         tokenizer = tokenizer_from_json(f.read())
@@ -65,9 +67,8 @@ def train(dataset_path,
     model.compile('adam', 'sparse_categorical_crossentropy', ['accuracy'])
     model.summary()
 
-    embeddings = model.layers[0].weights[0].numpy() 
-    export_vocabulary(vocab_size, tokenizer.word_index, logs_path)
-    export_embeddings(embeddings, logs_path)
+#    embeddings = model.layers[0].weights[0].numpy() 
+#    export_embeddings(embeddings, logs_path)
 
     hist = model.fit(
         train_ds, 
@@ -83,8 +84,7 @@ if __name__ == '__main__':
     parser.add_argument('dataset', type=str)
     parser.add_argument('run_hash', type=str)
     parser.add_argument('epochs', type=int)
-    parser.add_argument('vocab_size', type=int)
     args = parser.parse_args()
 
-    train(args.dataset, args.run_hash, epochs=args.epochs, vocab_size=args.vocab_size)
+    train(args.dataset, args.run_hash, epochs=args.epochs)
 

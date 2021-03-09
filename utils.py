@@ -22,13 +22,6 @@ def plot_hist(history, key, path, with_val=True, sufix=''):
     return plt.show()
 
 
-def export_vocabulary(vocab_size, word_index, dir_path):
-    with open(os.path.join(dir_path, 'meta.tsv'), 'w') as f:
-        f.writelines(['0\n'])
-        words = list(word_index.keys())
-        f.write('\n'.join(words[:vocab_size]))
-
-                
 def export_embeddings(embeddings, dir_path):
     with open(os.path.join(dir_path, 'vect.tsv'), 'w') as f: 
         text = '\n'.join(
@@ -45,12 +38,13 @@ def plot_series(x, y, scale='log'):
     plt.show()
 
 
-def create_lr_sched(start_epoch, n_epochs, lr0=1e-3, lr_end=1e-9):
+def create_lr_sched(start_epoch, n_epochs, lr0=1e-3, lr_end=1e-9, warmup=True):
     """
     start_epoch: epoch where to start decaying
     n_epochs: total number of epochs
     lr0: initial learning rate
     lr_end: learning rate end value
+    warmup: wheter to gradualy increase learning rate on the first few epochs
 
     return: learning rate scheduler function with given parameters.
     """
@@ -58,7 +52,11 @@ def create_lr_sched(start_epoch, n_epochs, lr0=1e-3, lr_end=1e-9):
     def sched(epoch):
         exp_range = np.log10(lr0/lr_end) 
         epoch_ratio = (epoch - start_epoch)/(n_epochs - start_epoch)
-        if epoch < start_epoch:
+        warmup_epochs = int(np.log10(lr0/lr_end)) + 1
+
+        if warmup and epoch < warmup_epochs:
+            lr = lr_end * (10 ** (epoch-1))
+        elif epoch < start_epoch:
             lr = lr0
         else:
             lr = lr0 * 10**-(exp_range * epoch_ratio) 
