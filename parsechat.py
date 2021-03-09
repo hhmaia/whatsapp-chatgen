@@ -87,7 +87,7 @@ def export_tokenizer(filepath, dataset_path, max_vocab_size):
 
 
 def export_vocabulary(path, vocab_size, word_index):
-    with open('path', 'w') as f:
+    with open(path, 'w') as f:
         f.writelines(['0\n'])
         words = list(word_index.keys())
         f.write('\n'.join(words[:vocab_size]))

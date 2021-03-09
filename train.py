@@ -20,11 +20,12 @@ def check_dirs(run_hash):
     except FileNotFoundError:
         os.makedirs(logs_path)
 
-    return logs_path, model_path, tok_path
+    return logs_path, model_path, tok_path, assets_path
 
 
 def train(dataset_path,
-        run_hash, 
+        run_hash,
+        warmup=False,
         seq_len=32, 
         vocab_size=10000,
         emb_dim=32,
@@ -33,8 +34,8 @@ def train(dataset_path,
         train_split = 0.8,
         val_split = 0.2):
     
-    logs_path, model_path, tok_path = check_dirs(run_hash)
-    labels_path = os.path.join(model_path, 'labels.tsv')
+    logs_path, model_path, tok_path, assets_path = check_dirs(run_hash)
+    labels_path = os.path.join(assets_path, 'labels.tsv')
 
     ckp_cb = tf.keras.callbacks.ModelCheckpoint(
         model_path,
@@ -42,7 +43,7 @@ def train(dataset_path,
         save_best_only=True)
 
     lr_cb = tf.keras.callbacks.LearningRateScheduler(
-        create_lr_sched(epochs/2, epochs), True)
+        create_lr_sched(epochs/2, epochs, warmup=warmup), True)
 
     tb_cb = tf.keras.callbacks.TensorBoard(
             logs_path, 10, True, True, 
